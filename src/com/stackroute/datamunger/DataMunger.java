@@ -1,8 +1,5 @@
 package com.stackroute.datamunger;
 
-import java.io.StreamCorruptedException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -40,9 +37,7 @@ public class DataMunger {
 	 */
 
 	public String[] getSplitStrings(String queryString) {
-		 
-		String[] splitArray = queryString.toLowerCase().split(" ");
-		return splitArray;
+		return queryString.toLowerCase().split(" ");
 	}
 
 	/*
@@ -54,21 +49,21 @@ public class DataMunger {
 	 */
 
 	public String getFileName(String queryString) {
-		String sub_string="";
-		String file_name="";
-		int from_index = queryString.indexOf(" from ")+1;
+		String subString="";
+		String fileName="";
+		int fromIndex = queryString.indexOf(" from ")+1;
 		//substring starting from 'from' 
-		sub_string = queryString.substring(from_index);
-		if(sub_string.indexOf(" ")>0) {
+		subString = queryString.substring(fromIndex);
+		if(subString.indexOf(" ")>0) {
 			//substring starting from next word of 'from'
-			sub_string = sub_string.substring(sub_string.indexOf(" ")+1);
+			subString = subString.substring(subString.indexOf(" ")+1);
 		}
-		if(sub_string.indexOf(" ")>0) {//contains other clause after from clause
-			file_name = sub_string.substring(0, sub_string.indexOf(" "));
+		if(subString.indexOf(" ")>0) {//contains other clause after from clause
+			fileName = subString.substring(0, subString.indexOf(" "));
 		}else {
-			file_name = sub_string;
+			fileName = subString;
 		}
-		return file_name;
+		return fileName;
 	}
 
 	/*
@@ -82,8 +77,7 @@ public class DataMunger {
 	 */
 	
 	public String getBaseQuery(String queryString) {
-		String base_query="";
-		String from_clause="";
+		String baseQuery="";
 		int endIndex;
 		if(queryString.contains(" where ")) {
 			endIndex = queryString.indexOf(" where ");
@@ -97,11 +91,11 @@ public class DataMunger {
 			}
 		}
 		if(endIndex == -1) {
-			base_query = queryString;
+			baseQuery = queryString;
 		}else {
-			base_query = queryString.substring(0,endIndex);
+			baseQuery = queryString.substring(0,endIndex);
 		}
-		return base_query;
+		return baseQuery;
 	}
 
 	/*
@@ -117,9 +111,8 @@ public class DataMunger {
 	 */
 	
 	public String[] getFields(String queryString) {
-		String fields_part = queryString.substring(7, queryString.indexOf(" from "));
-		String[] fields = fields_part.split(",");
-		return fields;
+		String fieldsPart = queryString.substring(7, queryString.indexOf(" from "));
+		return fieldsPart.split(",");
 	}
 
 	/*
@@ -134,21 +127,22 @@ public class DataMunger {
 	
 	public String getConditionsPartQuery(String queryString) {
 		queryString = queryString.toLowerCase();
+		String subString="";
 		String conditionClause = null;
 		int endIndex;
 		if(queryString.contains(" where ")) {
-			queryString = queryString.substring(queryString.indexOf(" where ")+7);
-			if(queryString.contains(" group by ")) {
-				endIndex = queryString.indexOf(" group by ");
-			}else if(queryString.contains(" order by ")){
-				endIndex = queryString.indexOf(" order by ");
+			subString = queryString.substring(queryString.indexOf(" where ")+7);
+			if(subString.contains(" group by ")) {
+				endIndex = subString.indexOf(" group by ");
+			}else if(subString.contains(" order by ")){
+				endIndex = subString.indexOf(" order by ");
 			}else {
 				endIndex= -1;
 			}
 			if(endIndex == -1) {
-				conditionClause = queryString;
+				conditionClause = subString;
 			}else {
-				conditionClause =queryString.substring(0, endIndex);
+				conditionClause =subString.substring(0, endIndex);
 			}
 		}
 		return conditionClause;
@@ -307,16 +301,16 @@ public class DataMunger {
 		String [] aggregateFunctions= null;
 		if(!(fields[0].contains("*"))) {
 			for(int i=0;i<fields.length;i++) {
-				Matcher m = Pattern.compile("\\(([^)]+)\\)").matcher(fields[i]);
-				if(m.find()) { //checking for aggregate functions
+				Matcher matcher = Pattern.compile("\\(([^)]+)\\)").matcher(fields[i]);
+				if(matcher.find()) { //checking for aggregate functions
 					aggrFunctionCounter++; // counting number of aggregate functions
 				}
 			}
 			aggregateFunctions = new String[aggrFunctionCounter];
 			aggrFunctionCounter = 0;
 			for(int i=0;i<fields.length;i++) {
-				Matcher m = Pattern.compile("\\(([^)]+)\\)").matcher(fields[i]);
-				if(m.find()) { 
+				Matcher matcher = Pattern.compile("\\(([^)]+)\\)").matcher(fields[i]);
+				if(matcher.find()) { 
 					aggregateFunctions[aggrFunctionCounter++] = fields[i];
 				}
 			}
