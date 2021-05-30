@@ -1,5 +1,11 @@
 package com.stackroute.datamunger;
 
+import java.io.StreamCorruptedException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /*There are total 5 DataMungertest files:
  * 
  * 1)DataMungerTestTask1.java file is for testing following 3 methods
@@ -34,8 +40,9 @@ public class DataMunger {
 	 */
 
 	public String[] getSplitStrings(String queryString) {
-
-		return null;
+		 
+		String[] splitArray = queryString.toLowerCase().split(" ");
+		return splitArray;
 	}
 
 	/*
@@ -47,8 +54,21 @@ public class DataMunger {
 	 */
 
 	public String getFileName(String queryString) {
-
-		return null;
+		String sub_string="";
+		String file_name="";
+		int from_index = queryString.indexOf(" from ")+1;
+		//substring starting from 'from' 
+		sub_string = queryString.substring(from_index);
+		if(sub_string.indexOf(" ")>0) {
+			//substring starting from next word of 'from'
+			sub_string = sub_string.substring(sub_string.indexOf(" ")+1);
+		}
+		if(sub_string.indexOf(" ")>0) {//contains other clause after from clause
+			file_name = sub_string.substring(0, sub_string.indexOf(" "));
+		}else {
+			file_name = sub_string;
+		}
+		return file_name;
 	}
 
 	/*
@@ -62,8 +82,26 @@ public class DataMunger {
 	 */
 	
 	public String getBaseQuery(String queryString) {
-
-		return null;
+		String base_query="";
+		String from_clause="";
+		int endIndex;
+		if(queryString.contains(" where ")) {
+			endIndex = queryString.indexOf(" where ");
+		}else {
+			if(queryString.contains(" group by ")) {
+				endIndex = queryString.indexOf(" group by ");
+			}else if(queryString.contains(" order by ")){
+				endIndex = queryString.indexOf(" order by ");
+			}else {
+				endIndex= -1;
+			}
+		}
+		if(endIndex == -1) {
+			base_query = queryString;
+		}else {
+			base_query = queryString.substring(0,endIndex);
+		}
+		return base_query;
 	}
 
 	/*
@@ -79,8 +117,9 @@ public class DataMunger {
 	 */
 	
 	public String[] getFields(String queryString) {
-
-		return null;
+		String fields_part = queryString.substring(7, queryString.indexOf(" from "));
+		String[] fields = fields_part.split(",");
+		return fields;
 	}
 
 	/*
@@ -94,8 +133,25 @@ public class DataMunger {
 	 */
 	
 	public String getConditionsPartQuery(String queryString) {
-
-		return null;
+		queryString = queryString.toLowerCase();
+		String conditionClause = null;
+		int endIndex;
+		if(queryString.contains(" where ")) {
+			queryString = queryString.substring(queryString.indexOf(" where ")+7);
+			if(queryString.contains(" group by ")) {
+				endIndex = queryString.indexOf(" group by ");
+			}else if(queryString.contains(" order by ")){
+				endIndex = queryString.indexOf(" order by ");
+			}else {
+				endIndex= -1;
+			}
+			if(endIndex == -1) {
+				conditionClause = queryString;
+			}else {
+				conditionClause =queryString.substring(0, endIndex);
+			}
+		}
+		return conditionClause;
 	}
 
 	/*
@@ -114,10 +170,43 @@ public class DataMunger {
 	 */
 
 	public String[] getConditions(String queryString) {
-
-		return null;
+		String conditional_clause = getConditionsPartQuery(queryString);
+		String[] splitUsingAND = null; 
+		String[] splitUsingOR = null;
+		String result[][] = new String[2][];
+		String[] conditions = null;
+		int conitionCounter = 0;
+		int totalConditions =0;
+		if(conditional_clause!=null && !conditional_clause.equals("")) {
+			if(conditional_clause.contains(" and ")) {
+				splitUsingAND = conditional_clause.split(" and ");
+			}else {
+				splitUsingAND = new String[1];
+				splitUsingAND[0] = conditional_clause;
+			}
+			for(int i=0;i<splitUsingAND.length;i++) {
+				if(splitUsingAND[i].contains(" or ")) {
+					splitUsingOR = null;
+					splitUsingOR = splitUsingAND[i].split(" or ");
+				}else {
+					splitUsingOR = new String[1];
+					splitUsingOR[0] = splitUsingAND[i];
+				}
+				result[i] = splitUsingOR;
+				totalConditions = totalConditions+result[i].length;
+			}
+			conditions = new String[totalConditions];
+			
+			for(int i=0;i<result.length;i++) {
+				if(result[i]!=null) {
+					for(int j=0;j<result[i].length;j++) {
+						conditions[conitionCounter++] = result[i][j];
+					}
+				}
+			}
+		}
+		return conditions;
 	}
-
 	/*
 	 * This method will extract logical operators(AND/OR) from the query string. The
 	 * extracted logical operators will be stored in a String array which will be
@@ -130,8 +219,30 @@ public class DataMunger {
 	 */
 
 	public String[] getLogicalOperators(String queryString) {
-
-		return null;
+		String conditionsClause = getConditionsPartQuery(queryString);
+		boolean isAND = false;
+		boolean isOR = false;
+		String[] conditionalOperator = null;
+		if(conditionsClause!=null && !conditionsClause.equals("")) {
+			if(conditionsClause.contains(" and ")){
+				isAND = true;
+			} 
+			if(conditionsClause.contains(" or ")){
+				isOR = true;
+			}
+		}
+		if(isAND && isOR ) {
+			conditionalOperator = new String[2];
+			conditionalOperator[0]="and";
+			conditionalOperator[1]="or";
+		}else if(isAND){
+			conditionalOperator = new String[1];
+			conditionalOperator[0]="and";
+		}else if(isOR) {
+			conditionalOperator = new String[1];
+			conditionalOperator[0]="or";
+		}
+		return conditionalOperator;
 	}
 
 	/*
@@ -143,8 +254,14 @@ public class DataMunger {
 	 */
 
 	public String[] getOrderByFields(String queryString) {
-
-		return null;
+		String[] orderByFields = null;
+		String orderByClause ="";
+		if(queryString.contains(" order by ")) {
+			//get String after order by keyword
+			orderByClause = queryString.substring(queryString.indexOf(" order by ")+10);
+			orderByFields = orderByClause.split(",");
+		}
+		return orderByFields;
 	}
 
 	/*
@@ -157,8 +274,20 @@ public class DataMunger {
 	 */
 
 	public String[] getGroupByFields(String queryString) {
-
-		return null;
+		String groupByClause ="";
+		String[] groupByFields = null;
+		int endIndex;
+		if(queryString.contains(" group by ")) {
+			//get String after group by keyword
+			groupByClause = queryString.substring(queryString.indexOf(" group by ")+10);
+			//if also have order by clause
+			if(groupByClause.contains(" order by ")) {
+				endIndex = groupByClause.indexOf(" order by ");
+				groupByClause = groupByClause.substring(0, endIndex);
+			}
+			groupByFields = groupByClause.split(",");
+		}
+		return groupByFields;
 	}
 
 	/*
@@ -172,8 +301,27 @@ public class DataMunger {
 	 */
 
 	public String[] getAggregateFunctions(String queryString) {
-
-		return null;
+		String[] fields = getFields(queryString);
+		
+		int aggrFunctionCounter = 0;
+		String [] aggregateFunctions= null;
+		if(!(fields[0].contains("*"))) {
+			for(int i=0;i<fields.length;i++) {
+				Matcher m = Pattern.compile("\\(([^)]+)\\)").matcher(fields[i]);
+				if(m.find()) { //checking for aggregate functions
+					aggrFunctionCounter++; // counting number of aggregate functions
+				}
+			}
+			aggregateFunctions = new String[aggrFunctionCounter];
+			aggrFunctionCounter = 0;
+			for(int i=0;i<fields.length;i++) {
+				Matcher m = Pattern.compile("\\(([^)]+)\\)").matcher(fields[i]);
+				if(m.find()) { 
+					aggregateFunctions[aggrFunctionCounter++] = fields[i];
+				}
+			}
+		}
+		return aggregateFunctions;
 	}
 
 }
